@@ -1,0 +1,28 @@
+{
+  "name": "spring-boot-grpc-e2e-tests",
+  "version": "1.0.0",
+  "description": "End-to-end tests for Spring Boot gRPC microservices",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:order": "playwright test tests/order-service.spec.ts",
+    "test:payment": "playwright test tests/payment-service.spec.ts",
+    "test:e2e": "playwright test tests/e2e-flow.spec.ts",
+    "test:report": "playwright show-report",
+    "test:ui": "playwright test --ui"
+  },
+  "keywords": [
+    "playwright",
+    "e2e",
+    "microservices",
+    "spring-boot",
+    "testing"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.10.0"
+  }
+}
