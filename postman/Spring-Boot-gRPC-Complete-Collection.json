@@ -1,0 +1,1039 @@
+{
+	"info": {
+		"_postman_id": "c55d3f8f-d83b-4b7b-8fa8-3806c1af10b1",
+		"name": "Spring Boot gRPC - Order & Payment Services - Complete",
+		"description": "Comprehensive API testing suite for Order and Payment microservices with Kafka integration. Includes health checks, CRUD operations, and integration tests.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Health Checks",
+			"item": [
+				{
+					"name": "Order Service Health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response time is less than 500ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);",
+									"});",
+									"",
+									"pm.test(\"Service status is UP\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql(\"UP\");",
+									"});",
+									"",
+									"pm.test(\"Database status is UP\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.database).to.eql(\"UP\");",
+									"});",
+									"",
+									"pm.test(\"Kafka status is UP\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.kafka).to.eql(\"UP\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrlOrder}}/api/health",
+							"host": [
+								"{{baseUrlOrder}}"
+							],
+							"path": [
+								"api",
+								"health"
+							]
+						},
+						"description": "Checks if Order Service is healthy with database and Kafka connections"
+					},
+					"response": []
+				},
+				{
+					"name": "Payment Service Health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response time is less than 500ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(500);",
+									"});",
+									"",
+									"pm.test(\"Service status is UP\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql(\"UP\");",
+									"});",
+									"",
+									"pm.test(\"Database status is UP\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.database).to.eql(\"UP\");",
+									"});",
+									"",
+									"pm.test(\"Kafka status is UP\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.kafka).to.eql(\"UP\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrlPayment}}/api/health",
+							"host": [
+								"{{baseUrlPayment}}"
+							],
+							"path": [
+								"api",
+								"health"
+							]
+						},
+						"description": "Checks if Payment Service is healthy with database and Kafka connections"
+					},
+					"response": []
+				},
+				{
+					"name": "API Gateway Health",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Service status is UP\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql(\"UP\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrlGateway}}/actuator/health",
+							"host": [
+								"{{baseUrlGateway}}"
+							],
+							"path": [
+								"actuator",
+								"health"
+							]
+						},
+						"description": "Checks if API Gateway is healthy"
+					},
+					"response": []
+				}
+			],
+			"description": "Verify all microservices are running and healthy"
+		},
+		{
+			"name": "2. Order Service - CRUD Operations",
+			"item": [
+				{
+					"name": "Create Order",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201 Created\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test(\"Response has orderId\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.orderId).to.exist;",
+									"    pm.environment.set(\"lastOrderId\", jsonData.orderId);",
+									"});",
+									"",
+									"pm.test(\"Response has userId\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.userId).to.exist;",
+									"    pm.environment.set(\"lastUserId\", jsonData.userId);",
+									"});",
+									"",
+									"pm.test(\"Order status is PENDING\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql(\"PENDING\");",
+									"});",
+									"",
+									"pm.test(\"Total amount is calculated correctly\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    const expectedTotal = jsonData.quantity * jsonData.price;",
+									"    pm.expect(jsonData.totalAmount).to.eql(expectedTotal);",
+									"});",
+									"",
+									"pm.test(\"Created timestamp exists\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.createdAt).to.exist;",
+									"});",
+									"",
+									"pm.test(\"Updated timestamp exists\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.updatedAt).to.exist;",
+									"});",
+									"",
+									"console.log(\"Order created with ID:\", pm.environment.get(\"lastOrderId\"));"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": \"test-user-{{$randomInt}}\",\n  \"productId\": \"prod-{{$randomInt}}\",\n  \"productName\": \"Test Product - {{$randomProduct}}\",\n  \"quantity\": 2,\n  \"price\": 99.99\n}"
+						},
+						"url": {
+							"raw": "{{baseUrlOrder}}/api/orders",
+							"host": [
+								"{{baseUrlOrder}}"
+							],
+							"path": [
+								"api",
+								"orders"
+							]
+						},
+						"description": "Creates a new order. The order will be published to Kafka and consumed by Payment Service."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Orders",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"pm.test(\"Response time is less than 1000ms\", function () {",
+									"    pm.expect(pm.response.responseTime).to.be.below(1000);",
+									"});",
+									"",
+									"if (pm.response.json().length > 0) {",
+									"    pm.test(\"Each order has required fields\", function () {",
+									"        const jsonData = pm.response.json();",
+									"        jsonData.forEach(order => {",
+									"            pm.expect(order).to.have.property('orderId');",
+									"            pm.expect(order).to.have.property('userId');",
+									"            pm.expect(order).to.have.property('productId');",
+									"            pm.expect(order).to.have.property('status');",
+									"            pm.expect(order).to.have.property('createdAt');",
+									"        });",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrlOrder}}/api/orders?page=0&size=10",
+							"host": [
+								"{{baseUrlOrder}}"
+							],
+							"path": [
+								"api",
+								"orders"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Retrieves all orders with pagination support"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Order by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Order ID matches request\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.orderId).to.eql(pm.environment.get(\"lastOrderId\"));",
+									"});",
+									"",
+									"pm.test(\"Order has all required fields\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('orderId');",
+									"    pm.expect(jsonData).to.have.property('userId');",
+									"    pm.expect(jsonData).to.have.property('productId');",
+									"    pm.expect(jsonData).to.have.property('productName');",
+									"    pm.expect(jsonData).to.have.property('quantity');",
+									"    pm.expect(jsonData).to.have.property('price');",
+									"    pm.expect(jsonData).to.have.property('totalAmount');",
+									"    pm.expect(jsonData).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('createdAt');",
+									"    pm.expect(jsonData).to.have.property('updatedAt');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrlOrder}}/api/orders/{{lastOrderId}}",
+							"host": [
+								"{{baseUrlOrder}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"{{lastOrderId}}"
+							]
+						},
+						"description": "Retrieves a specific order by its unique ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Orders by User ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"if (pm.response.json().length > 0) {",
+									"    pm.test(\"All orders belong to the requested user\", function () {",
+									"        const jsonData = pm.response.json();",
+									"        const requestedUserId = pm.environment.get(\"lastUserId\");",
+									"        jsonData.forEach(order => {",
+									"            pm.expect(order.userId).to.eql(requestedUserId);",
+									"        });",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrlOrder}}/api/orders/user/{{lastUserId}}?page=0&size=10",
+							"host": [
+								"{{baseUrlOrder}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"user",
+								"{{lastUserId}}"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Retrieves all orders for a specific user"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Orders by Status - PENDING",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"if (pm.response.json().length > 0) {",
+									"    pm.test(\"All orders have PENDING status\", function () {",
+									"        const jsonData = pm.response.json();",
+									"        jsonData.forEach(order => {",
+									"            pm.expect(order.status).to.eql(\"PENDING\");",
+									"        });",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrlOrder}}/api/orders/status/PENDING?page=0&size=10",
+							"host": [
+								"{{baseUrlOrder}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"status",
+								"PENDING"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Retrieves all orders with PENDING status. Valid statuses: PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Order Status to CONFIRMED",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Order status updated to CONFIRMED\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql(\"CONFIRMED\");",
+									"});",
+									"",
+									"pm.test(\"Updated timestamp changed\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.updatedAt).to.exist;",
+									"    pm.expect(new Date(jsonData.updatedAt).getTime()).to.be.greaterThan(new Date(jsonData.createdAt).getTime());",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"CONFIRMED\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrlOrder}}/api/orders/{{lastOrderId}}/status",
+							"host": [
+								"{{baseUrlOrder}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"{{lastOrderId}}",
+								"status"
+							]
+						},
+						"description": "Updates the status of an order. Valid statuses: PENDING, CONFIRMED, SHIPPED, DELIVERED, CANCELLED"
+					},
+					"response": []
+				}
+			],
+			"description": "Complete CRUD operations for Order Service"
+		},
+		{
+			"name": "3. Payment Service - Query Operations",
+			"item": [
+				{
+					"name": "Get All Payments",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"if (pm.response.json().length > 0) {",
+									"    pm.test(\"Each payment has required fields\", function () {",
+									"        const jsonData = pm.response.json();",
+									"        const payment = jsonData[0];",
+									"        pm.expect(payment).to.have.property('paymentId');",
+									"        pm.expect(payment).to.have.property('orderId');",
+									"        pm.expect(payment).to.have.property('userId');",
+									"        pm.expect(payment).to.have.property('amount');",
+									"        pm.expect(payment).to.have.property('status');",
+									"        pm.expect(payment).to.have.property('createdAt');",
+									"    });",
+									"    ",
+									"    const jsonData = pm.response.json();",
+									"    pm.environment.set(\"lastPaymentId\", jsonData[0].paymentId);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrlPayment}}/api/payments?page=0&size=10",
+							"host": [
+								"{{baseUrlPayment}}"
+							],
+							"path": [
+								"api",
+								"payments"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Retrieves all payments with pagination support"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Payment by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Payment ID matches request\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.paymentId).to.eql(pm.environment.get(\"lastPaymentId\"));",
+									"});",
+									"",
+									"pm.test(\"Payment has all required fields\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('paymentId');",
+									"    pm.expect(jsonData).to.have.property('orderId');",
+									"    pm.expect(jsonData).to.have.property('userId');",
+									"    pm.expect(jsonData).to.have.property('amount');",
+									"    pm.expect(json Data).to.have.property('status');",
+									"    pm.expect(jsonData).to.have.property('paymentMethod');",
+									"    pm.expect(jsonData).to.have.property('createdAt');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrlPayment}}/api/payments/{{lastPaymentId}}",
+							"host": [
+								"{{baseUrlPayment}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"{{lastPaymentId}}"
+							]
+						},
+						"description": "Retrieves a specific payment by its unique ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Payment by Order ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Payment order ID matches request\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.orderId).to.eql(pm.environment.get(\"lastOrderId\"));",
+									"});",
+									"",
+									"pm.test(\"Payment was created via Kafka\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.paymentId).to.exist;",
+									"});",
+									"",
+									"pm.test(\"Payment status is COMPLETED\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql(\"COMPLETED\");",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrlPayment}}/api/payments/order/{{lastOrderId}}",
+							"host": [
+								"{{baseUrlPayment}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"order",
+								"{{lastOrderId}}"
+							]
+						},
+						"description": "Retrieves the payment for a specific order. Run this after creating an order to verify Kafka integration."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Payments by User ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"if (pm.response.json().length > 0) {",
+									"    pm.test(\"All payments belong to the requested user\", function () {",
+									"        const jsonData = pm.response.json();",
+									"        const requestedUserId = pm.environment.get(\"lastUserId\");",
+									"        jsonData.forEach(payment => {",
+									"            pm.expect(payment.userId).to.eql(requestedUserId);",
+									"        });",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrlPayment}}/api/payments/user/{{lastUserId}}?page=0&size=10",
+							"host": [
+								"{{baseUrlPayment}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"user",
+								"{{lastUserId}}"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Retrieves all payments for a specific user"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Payments by Status - COMPLETED",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Response is an array\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.be.an('array');",
+									"});",
+									"",
+									"if (pm.response.json().length > 0) {",
+									"    pm.test(\"All payments have COMPLETED status\", function () {",
+									"        const jsonData = pm.response.json();",
+									"        jsonData.forEach(payment => {",
+									"            pm.expect(payment.status).to.eql(\"COMPLETED\");",
+									"        });",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrlPayment}}/api/payments/status/COMPLETED?page=0&size=10",
+							"host": [
+								"{{baseUrlPayment}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"status",
+								"COMPLETED"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Retrieves all payments with COMPLETED status. Valid statuses: PENDING, PROCESSING, COMPLETED, FAILED, REFUNDED"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Payment Statistics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Statistics has totalPayments\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('totalPayments');",
+									"    pm.expect(jsonData.totalPayments).to.be.a('number');",
+									"});",
+									"",
+									"pm.test(\"Statistics has totalAmount\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('totalAmount');",
+									"    pm.expect(jsonData.totalAmount).to.be.a('number');",
+									"});",
+									"",
+									"pm.test(\"Statistics has counts by status\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData).to.have.property('completedPayments');",
+									"    pm.expect(jsonData).to.have.property('pendingPayments');",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrlPayment}}/api/payments/statistics",
+							"host": [
+								"{{baseUrlPayment}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"statistics"
+							]
+						},
+						"description": "Retrieves payment statistics including total amount, count by status"
+					},
+					"response": []
+				}
+			],
+			"description": "Query operations for Payment Service (read-only, payments are created by Kafka consumer)"
+		},
+		{
+			"name": "4. Integration Tests",
+			"item": [
+				{
+					"name": "Step 1 - Create Integration Test Order",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Order created successfully\", function () {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"const jsonData = pm.response.json();",
+									"pm.environment.set(\"integrationOrderId\", jsonData.orderId);",
+									"pm.environment.set(\"integrationUserId\", jsonData.userId);",
+									"pm.environment.set(\"expectedPaymentAmount\", jsonData.totalAmount);",
+									"",
+									"console.log(\"Integration Test - Order ID:\", jsonData.orderId);",
+									"console.log(\"Integration Test - Expected Payment Amount:\", jsonData.totalAmount);",
+									"console.log(\"Waiting for Kafka to process...\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": \"integration-test-user\",\n  \"productId\": \"integration-prod-001\",\n  \"productName\": \"Integration Test Product\",\n  \"quantity\": 5,\n  \"price\": 99.99\n}"
+						},
+						"url": {
+							"raw": "{{baseUrlOrder}}/api/orders",
+							"host": [
+								"{{baseUrlOrder}}"
+							],
+							"path": [
+								"api",
+								"orders"
+							]
+						},
+						"description": "Creates an order for integration testing. Wait 3-5 seconds before running next test for Kafka processing."
+					},
+					"response": []
+				},
+				{
+					"name": "Step 2 - Verify Payment Created (wait 5s)",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Wait 5 seconds for Kafka to process the event",
+									"console.log(\"Waiting 5 seconds for Kafka processing...\");",
+									"setTimeout(function() {}, 5000);"
+								],
+								"type": "text/javascript"
+							}
+						},
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Payment was created by Kafka consumer\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Payment order ID matches\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.orderId).to.eql(pm.environment.get(\"integrationOrderId\"));",
+									"});",
+									"",
+									"pm.test(\"Payment amount matches order total\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    const expectedAmount = pm.environment.get(\"expectedPaymentAmount\");",
+									"    pm.expect(jsonData.amount).to.eql(expectedAmount);",
+									"});",
+									"",
+									"pm.test(\"Payment status is COMPLETED\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.status).to.eql(\"COMPLETED\");",
+									"});",
+									"",
+									"pm.test(\"Payment user ID matches order\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.userId).to.eql(pm.environment.get(\"integrationUserId\"));",
+									"});",
+									"",
+									"console.log(\"✅ Integration Test Passed! Order → Kafka → Payment flow working correctly\");"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrlPayment}}/api/payments/order/{{integrationOrderId}}",
+							"host": [
+								"{{baseUrlPayment}}"
+							],
+							"path": [
+								"api",
+								"payments",
+								"order",
+								"{{integrationOrderId}}"
+							]
+						},
+						"description": "Verifies that the payment was automatically created by the Kafka consumer after order creation"
+					},
+					"response": []
+				},
+				{
+					"name": "Step 3 - Verify Order Database Persistence",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Order still exists in database\", function () {",
+									"    pm.response.to.have.status(200);",
+									"});",
+									"",
+									"pm.test(\"Order data integrity maintained\", function () {",
+									"    const jsonData = pm.response.json();",
+									"    pm.expect(jsonData.orderId).to.eql(pm.environment.get(\"integrationOrderId\"));",
+									"    pm.expect(jsonData.userId).to.eql(pm.environment.get(\"integrationUserId\"));",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrlOrder}}/api/orders/{{integrationOrderId}}",
+							"host": [
+								"{{baseUrlOrder}}"
+							],
+							"path": [
+								"api",
+								"orders",
+								"{{integrationOrderId}}"
+							]
+						},
+						"description": "Verifies that the order is properly persisted in the PostgreSQL database"
+					},
+					"response": []
+				}
+			],
+			"description": "End-to-end integration tests for Order → Kafka → Payment flow"
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrlOrder",
+			"value": "http://localhost:8081",
+			"type": "string"
+		},
+		{
+			"key": "baseUrlPayment",
+			"value": "http://localhost:8082",
+			"type": "string"
+		},
+		{
+			"key": "baseUrlGateway",
+			"value": "http://localhost:8080",
+			"type": "string"
+		}
+	]
+}
