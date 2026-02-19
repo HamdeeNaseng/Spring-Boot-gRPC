@@ -1,0 +1,67 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  
+  # Redis Configuration for Session Management
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+      timeout: 60000
+  
+  # Session Configuration
+  session:
+    store-type: redis
+    timeout: 30m
+    redis:
+      namespace: spring:session:gateway
+      flush-mode: on_save
+      cleanup-cron: 0 * * * * *
+
+# gRPC Client Configuration
+grpc:
+  client:
+    order-service:
+      address: static://${ORDER_SERVICE_HOST:localhost}:${ORDER_SERVICE_PORT:9090}
+      negotiationType: plaintext
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: always
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    sampling:
+      probability: 1.0
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.spring.grpc: DEBUG
+    org.springframework.session: DEBUG
+    io.lettuce.core: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"

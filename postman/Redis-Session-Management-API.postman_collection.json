@@ -1,0 +1,318 @@
+{
+  "info": {
+    "name": "Spring Boot gRPC - Redis Session Management",
+    "description": "API collection for testing Redis session management in the API Gateway",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "sessionId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Session Management",
+      "item": [
+        {
+          "name": "1. Login (Create Session)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Save session ID for subsequent requests",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set('sessionId', jsonData.sessionId);",
+                  "    pm.test('Login successful', function () {",
+                  "        pm.expect(jsonData.message).to.eql('Login successful');",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"john.doe\",\n  \"password\": \"secret123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/session/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "session", "login"]
+            },
+            "description": "Create a new session by logging in. The session ID is saved automatically."
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get Session Info",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Session info retrieved', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.userId).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/session/info",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "session", "info"]
+            },
+            "description": "Retrieve current session information. Cookie is sent automatically."
+          },
+          "response": []
+        },
+        {
+          "name": "3. Set Session Attribute",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/session/attribute?key=theme&value=dark",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "session", "attribute"],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "theme"
+                },
+                {
+                  "key": "value",
+                  "value": "dark"
+                }
+              ]
+            },
+            "description": "Set a custom session attribute"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Get Session Attribute",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/session/attribute/theme",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "session", "attribute", "theme"]
+            },
+            "description": "Retrieve a specific session attribute by key"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Get Active Session Count",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/session/count",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "session", "count"]
+            },
+            "description": "Get the total number of active sessions stored in Redis"
+          },
+          "response": []
+        },
+        {
+          "name": "6. Logout (Destroy Session)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Logout successful', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql('Logout successful');",
+                  "});",
+                  "// Clear session ID",
+                  "pm.collectionVariables.set('sessionId', '');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/session/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "session", "logout"]
+            },
+            "description": "Logout and invalidate the current session"
+          },
+          "response": []
+        }
+      ],
+      "description": "Endpoints for managing user sessions with Redis"
+    },
+    {
+      "name": "Health & Monitoring",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Check application and Redis health status"
+          },
+          "response": []
+        },
+        {
+          "name": "Actuator Health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "health"]
+            },
+            "description": "Spring Boot Actuator health endpoint"
+          },
+          "response": []
+        },
+        {
+          "name": "Prometheus Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/prometheus",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "prometheus"]
+            },
+            "description": "Prometheus metrics including Redis session metrics"
+          },
+          "response": []
+        },
+        {
+          "name": "Actuator Metrics",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/actuator/metrics",
+              "host": ["{{baseUrl}}"],
+              "path": ["actuator", "metrics"]
+            },
+            "description": "List all available metrics"
+          },
+          "response": []
+        }
+      ],
+      "description": "Health check and monitoring endpoints"
+    },
+    {
+      "name": "Test Scenarios",
+      "item": [
+        {
+          "name": "Create Multiple Sessions",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user{{$randomInt}}\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/session/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "session", "login"]
+            },
+            "description": "Create a session with random username (use Collection Runner to create multiple)"
+          },
+          "response": []
+        },
+        {
+          "name": "Set Multiple Attributes",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/session/attribute?key=language&value=en",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "session", "attribute"],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "language"
+                },
+                {
+                  "key": "value",
+                  "value": "en"
+                }
+              ]
+            },
+            "description": "Example of setting language preference"
+          },
+          "response": []
+        }
+      ],
+      "description": "Test scenarios for load testing and verification"
+    }
+  ],
+  "auth": {
+    "type": "noauth"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// This runs before each request"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// This runs after each request"
+        ]
+      }
+    }
+  ]
+}
