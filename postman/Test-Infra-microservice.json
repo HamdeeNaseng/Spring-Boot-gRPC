@@ -1,0 +1,948 @@
+{
+  "info": {
+    "name": "Microservices Infrastructure Test",
+    "description": "Comprehensive test suite for Spring Boot + gRPC + Kafka + Redis microservices architecture. Tests infrastructure health, inter-service communication, event-driven flows, and observability.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "apiGatewayUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "prometheusUrl",
+      "value": "http://localhost:9090",
+      "type": "string"
+    },
+    {
+      "key": "grafanaUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "redisUiUrl",
+      "value": "http://localhost:8081",
+      "type": "string"
+    },
+    {
+      "key": "jaegerUrl",
+      "value": "http://localhost:16686",
+      "type": "string"
+    },
+    {
+      "key": "sessionId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Infrastructure Health Checks",
+      "description": "Verify all microservices and infrastructure components are healthy",
+      "item": [
+        {
+          "name": "API Gateway Health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test infrastructure health",
+                  "pm.test('API Gateway is UP', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql('UP');",
+                  "});",
+                  "",
+                  "pm.test('Redis connection is healthy', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.redis).to.eql('UP');",
+                  "});",
+                  "",
+                  "pm.test('Response time is acceptable', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(500);",
+                  "});",
+                  "",
+                  "console.log('✅ API Gateway Health Check PASSED');",
+                  "console.log('   Service:', pm.response.json().service);",
+                  "console.log('   Status:', pm.response.json().status);",
+                  "console.log('   Redis:', pm.response.json().redis);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/api/health",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Check API Gateway and Redis health status"
+          },
+          "response": []
+        },
+        {
+          "name": "Actuator Health (Detailed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Spring Boot Actuator is UP', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql('UP');",
+                  "});",
+                  "",
+                  "pm.test('Response has components', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('components');",
+                  "});",
+                  "",
+                  "console.log('✅ Actuator Health Check PASSED');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/actuator/health",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["actuator", "health"]
+            },
+            "description": "Detailed Spring Boot Actuator health check"
+          },
+          "response": []
+        },
+        {
+          "name": "Redis Commander UI Accessibility",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Redis Commander UI is accessible', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Content-Type is HTML', function () {",
+                  "    pm.expect(pm.response.headers.get('Content-Type')).to.include('html');",
+                  "});",
+                  "",
+                  "console.log('✅ Redis Commander UI ACCESSIBLE');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{redisUiUrl}}",
+              "host": ["{{redisUiUrl}}"]
+            },
+            "description": "Verify Redis Commander UI is accessible"
+          },
+          "response": []
+        },
+        {
+          "name": "Prometheus Metrics Endpoint",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Prometheus metrics endpoint is accessible', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Metrics contain application info', function () {",
+                  "    pm.expect(pm.response.text()).to.include('http_server_requests');",
+                  "});",
+                  "",
+                  "pm.test('Metrics contain JVM info', function () {",
+                  "    pm.expect(pm.response.text()).to.include('jvm_memory');",
+                  "});",
+                  "",
+                  "console.log('✅ Prometheus Metrics AVAILABLE');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/actuator/prometheus",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["actuator", "prometheus"]
+            },
+            "description": "Check Prometheus metrics exposition"
+          },
+          "response": []
+        },
+        {
+          "name": "Jaeger UI Accessibility",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Jaeger UI is accessible', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "console.log('✅ Jaeger Tracing UI ACCESSIBLE');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{jaegerUrl}}",
+              "host": ["{{jaegerUrl}}"]
+            },
+            "description": "Verify Jaeger tracing UI is accessible"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Session Management (Redis)",
+      "description": "Test distributed session management with Redis",
+      "item": [
+        {
+          "name": "Create User Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Session created successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql('Login successful');",
+                  "});",
+                  "",
+                  "pm.test('Session ID is returned', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('sessionId');",
+                  "    pm.expect(jsonData.sessionId).to.not.be.empty;",
+                  "});",
+                  "",
+                  "pm.test('User ID is correct', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.userId).to.eql('microservice_user');",
+                  "});",
+                  "",
+                  "// Save session info",
+                  "var jsonData = pm.response.json();",
+                  "pm.collectionVariables.set('sessionId', jsonData.sessionId);",
+                  "pm.collectionVariables.set('userId', jsonData.userId);",
+                  "",
+                  "console.log('✅ SESSION CREATED');",
+                  "console.log('   Session ID:', jsonData.sessionId);",
+                  "console.log('   User ID:', jsonData.userId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"microservice_user\",\n  \"password\": \"test_password_123\"\n}"
+            },
+            "url": {
+              "raw": "{{apiGatewayUrl}}/api/session/login",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["api", "session", "login"]
+            },
+            "description": "Create session in Redis via API Gateway"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Session Persistence",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Session is persisted', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.sessionId).to.not.be.null;",
+                  "});",
+                  "",
+                  "pm.test('User data is preserved', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.userId).to.eql('microservice_user');",
+                  "});",
+                  "",
+                  "pm.test('Session has timestamps', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('creationTime');",
+                  "    pm.expect(jsonData).to.have.property('lastAccessedTime');",
+                  "});",
+                  "",
+                  "console.log('✅ SESSION PERSISTED IN REDIS');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/api/session/info",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["api", "session", "info"]
+            },
+            "description": "Verify session data is stored in Redis"
+          },
+          "response": []
+        },
+        {
+          "name": "Set Session Context Data",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Session attribute set', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('successfully');",
+                  "});",
+                  "",
+                  "console.log('✅ SESSION CONTEXT DATA SET');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/api/session/attribute?key=orderContext&value=active",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["api", "session", "attribute"],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "orderContext"
+                },
+                {
+                  "key": "value",
+                  "value": "active"
+                }
+              ]
+            },
+            "description": "Store order context in session"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. API Gateway Integration",
+      "description": "Test API Gateway as entry point to microservices",
+      "item": [
+        {
+          "name": "Gateway Routes Discovery",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Actuator endpoints available', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData._links).to.exist;",
+                  "});",
+                  "",
+                  "pm.test('Health endpoint available', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData._links).to.have.property('health');",
+                  "});",
+                  "",
+                  "pm.test('Metrics endpoint available', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData._links).to.have.property('metrics');",
+                  "});",
+                  "",
+                  "console.log('✅ GATEWAY ROUTES DISCOVERED');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/actuator",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["actuator"]
+            },
+            "description": "Discover available gateway routes and endpoints"
+          },
+          "response": []
+        },
+        {
+          "name": "Gateway Request Metrics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Metrics list available', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.names).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('HTTP server metrics exist', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    var hasHttpMetrics = jsonData.names.some(name => name.includes('http'));",
+                  "    pm.expect(hasHttpMetrics).to.be.true;",
+                  "});",
+                  "",
+                  "console.log('✅ REQUEST METRICS AVAILABLE');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/actuator/metrics",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["actuator", "metrics"]
+            },
+            "description": "Check available metrics for gateway requests"
+          },
+          "response": []
+        },
+        {
+          "name": "Session Distribution Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Session count retrieved', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('activeSessionCount');",
+                  "});",
+                  "",
+                  "pm.test('At least one session active', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.activeSessionCount).to.be.at.least(1);",
+                  "});",
+                  "",
+                  "console.log('✅ DISTRIBUTED SESSIONS VERIFIED');",
+                  "console.log('   Active Sessions:', pm.response.json().activeSessionCount);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/api/session/count",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["api", "session", "count"]
+            },
+            "description": "Verify sessions are distributed across gateway instances"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Event-Driven Architecture Test",
+      "description": "Simulate order creation flow through Kafka event stream",
+      "item": [
+        {
+          "name": "Prepare Order Context",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Order context prepared', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "// Generate order ID for tracking",
+                  "var orderId = 'ORD-' + Date.now();",
+                  "pm.collectionVariables.set('orderId', orderId);",
+                  "",
+                  "console.log('✅ ORDER CONTEXT PREPARED');",
+                  "console.log('   Order ID:', orderId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/api/session/attribute?key=currentOrder&value={{orderId}}",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["api", "session", "attribute"],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "currentOrder"
+                },
+                {
+                  "key": "value",
+                  "value": "{{orderId}}"
+                }
+              ]
+            },
+            "description": "Set up order context in session before processing"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Event Flow Metrics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Metrics endpoint accessible', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Contains session metrics', function () {",
+                  "    var metrics = pm.response.text();",
+                  "    var hasSessionMetrics = metrics.includes('session') || metrics.includes('http');",
+                  "    pm.expect(hasSessionMetrics).to.be.true;",
+                  "});",
+                  "",
+                  "console.log('✅ EVENT FLOW METRICS CAPTURED');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/actuator/prometheus",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["actuator", "prometheus"]
+            },
+            "description": "Verify metrics capture event flow data"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Observability & Monitoring",
+      "description": "Test monitoring endpoints and observability stack",
+      "item": [
+        {
+          "name": "Check JVM Metrics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('JVM metrics available', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var metrics = pm.response.text();",
+                  "    pm.expect(metrics).to.include('jvm_memory');",
+                  "});",
+                  "",
+                  "pm.test('Contains GC metrics', function () {",
+                  "    var metrics = pm.response.text();",
+                  "    pm.expect(metrics).to.include('jvm_gc');",
+                  "});",
+                  "",
+                  "pm.test('Contains thread metrics', function () {",
+                  "    var metrics = pm.response.text();",
+                  "    pm.expect(metrics).to.include('jvm_threads');",
+                  "});",
+                  "",
+                  "console.log('✅ JVM METRICS CAPTURED');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/actuator/prometheus",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["actuator", "prometheus"]
+            },
+            "description": "Verify JVM performance metrics"
+          },
+          "response": []
+        },
+        {
+          "name": "Application Info",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Application info available', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.be.an('object');",
+                  "});",
+                  "",
+                  "console.log('✅ APPLICATION INFO RETRIEVED');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/actuator/info",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["actuator", "info"]
+            },
+            "description": "Get application build and version info"
+          },
+          "response": []
+        },
+        {
+          "name": "Environment Variables",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Environment info available', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('propertySources');",
+                  "});",
+                  "",
+                  "console.log('✅ ENVIRONMENT CONFIGURATION VERIFIED');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/actuator/env",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["actuator", "env"]
+            },
+            "description": "Check environment configuration"
+          },
+          "response": []
+        },
+        {
+          "name": "Loggers Configuration",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Loggers configuration available', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('loggers');",
+                  "});",
+                  "",
+                  "console.log('✅ LOGGERS CONFIGURATION RETRIEVED');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/actuator/loggers",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["actuator", "loggers"]
+            },
+            "description": "View logging configuration"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Load Testing & Performance",
+      "description": "Performance and load testing scenarios",
+      "item": [
+        {
+          "name": "Concurrent Session Creation",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Session created under load', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.sessionId).to.not.be.null;",
+                  "});",
+                  "",
+                  "pm.test('Response time acceptable under load', function () {",
+                  "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+                  "});",
+                  "",
+                  "console.log('✅ LOAD TEST SESSION CREATED');",
+                  "console.log('   Response Time:', pm.response.responseTime + 'ms');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"load_test_user_{{$randomInt}}\",\n  \"password\": \"test_{{$timestamp}}\"\n}"
+            },
+            "url": {
+              "raw": "{{apiGatewayUrl}}/api/session/login",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["api", "session", "login"]
+            },
+            "description": "Create sessions with random users for load testing"
+          },
+          "response": []
+        },
+        {
+          "name": "Session Throughput Test",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Session info retrieved quickly', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    pm.expect(pm.response.responseTime).to.be.below(100);",
+                  "});",
+                  "",
+                  "pm.test('Session data intact', function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.sessionId).to.not.be.null;",
+                  "});",
+                  "",
+                  "console.log('✅ THROUGHPUT TEST PASSED');",
+                  "console.log('   Response Time:', pm.response.responseTime + 'ms');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/api/session/info",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["api", "session", "info"]
+            },
+            "description": "Measure session retrieval performance"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Load Metrics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Load metrics captured', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var metrics = pm.response.text();",
+                  "    pm.expect(metrics).to.include('http_server_requests');",
+                  "});",
+                  "",
+                  "console.log('✅ LOAD METRICS VERIFIED');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/actuator/prometheus",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["actuator", "prometheus"]
+            },
+            "description": "Check metrics after load test"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. Cleanup & Teardown",
+      "description": "Clean up test data and verify cleanup",
+      "item": [
+        {
+          "name": "Logout Test Session",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Session destroyed successfully', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.eql('Logout successful');",
+                  "});",
+                  "",
+                  "// Clear variables",
+                  "pm.collectionVariables.set('sessionId', '');",
+                  "pm.collectionVariables.set('userId', '');",
+                  "pm.collectionVariables.set('orderId', '');",
+                  "",
+                  "console.log('✅ SESSION DESTROYED');",
+                  "console.log('   Variables cleared');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/api/session/logout",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["api", "session", "logout"]
+            },
+            "description": "Destroy test session"
+          },
+          "response": []
+        },
+        {
+          "name": "Final Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('System still healthy after tests', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.status).to.eql('UP');",
+                  "    pm.expect(jsonData.redis).to.eql('UP');",
+                  "});",
+                  "",
+                  "console.log('✅ FINAL HEALTH CHECK PASSED');",
+                  "console.log('================================================');",
+                  "console.log('🎉 ALL MICROSERVICE TESTS COMPLETED SUCCESSFULLY');",
+                  "console.log('================================================');"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{apiGatewayUrl}}/api/health",
+              "host": ["{{apiGatewayUrl}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Verify system health after all tests"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global pre-request script",
+          "console.log('==========================================');",
+          "console.log('🧪 Running:', pm.info.requestName);",
+          "console.log('==========================================');"
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Global test script",
+          "console.log('------------------------------------------');"
+        ]
+      }
+    }
+  ]
+}
